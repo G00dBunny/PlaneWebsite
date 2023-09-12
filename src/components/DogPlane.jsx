@@ -26,34 +26,57 @@ export function DogPlane(props) {
             receiveShadow
             geometry={nodes["Node-Mesh001"].geometry}
             material={materials["mat7.002"]}
-            />
+            >
+                <meshStandardMaterial color="white" />
+
+            </ mesh>
+
+
             <mesh
             castShadow
             receiveShadow
             geometry={nodes["Node-Mesh001_1"].geometry}
             material={materials["mat23.002"]}
-            />
+            >
+                {/* <meshStandardMaterial color="white" /> */}
+
+            </ mesh>
+
             <mesh
             castShadow
             receiveShadow
             geometry={nodes["Node-Mesh001_2"].geometry}
             material={materials["mat21.002"]}
-            />
+            >
+                <meshStandardMaterial color="white" />
+
+            </ mesh>
+
+
+
             <mesh
             castShadow
             receiveShadow
             geometry={nodes["Node-Mesh001_3"].geometry}
             material={materials["mat19.002"]}
-            />
+            >
+                {/* <meshStandardMaterial color="white" /> */}
+
+            </ mesh>
+
         </group>
-        <mesh
+            <mesh
             ref={heliceMvt}
             castShadow
             receiveShadow
             geometry={nodes.helice.geometry}
             material={nodes.helice.material}
             position={[0.142, -0.389, 0.08]}
-        />
+            >
+                <meshStandardMaterial color="white" />
+
+            </ mesh>
+
         </group>
     );
 }
