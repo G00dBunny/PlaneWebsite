@@ -4,19 +4,20 @@ import { DogPlane } from './DogPlane.jsx'
 import {  useMemo, useRef } from 'react'
 import * as THREE from "three"
 import { useFrame } from '@react-three/fiber'
+import { TextSection } from './TextSection.jsx'
+import { lerp } from 'three/src/math/MathUtils.js'
 
 const LINE_NB_POINTS = 1000
 const CURVE_DISTANCE = 250
 const CURVE_AHEAD_CAMERA = 0.008
 const CURVE_AHEAD_AIRPLANE = 0.02
 const AIRPLANE_MAX_ANGLE = 35
+const FRICTION_DISTANCE = 42
 
 
 export default function Experience()
 {
-    const curve = useMemo(() =>
-    {
-        return new THREE.CatmullRomCurve3([
+    const curvePoints = useMemo(() => [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -CURVE_DISTANCE),
             new THREE.Vector3(100, 0, -2 * CURVE_DISTANCE),
@@ -25,12 +26,67 @@ export default function Experience()
             new THREE.Vector3(0, 0, -5 * CURVE_DISTANCE),
             new THREE.Vector3(0, 0, -6 * CURVE_DISTANCE),
             new THREE.Vector3(0, 0, -7 * CURVE_DISTANCE),
+        ]
+    , [])
 
 
-        ],
-        false,
-        "catmullrom",
-        0.5)
+    const curve = useMemo(() =>
+    {
+        return new THREE.CatmullRomCurve3(
+            curvePoints,
+            false,
+            "catmullrom",
+            0.5)
+    }, [])
+
+    const textSections = useMemo(() => {
+        return [{
+            cameraRailDist : -1,
+            position : new THREE.Vector3(
+                curvePoints[1].x - 3,
+                curvePoints[1].y,
+                curvePoints[1].z
+            ),
+            subtitle : `Welcome to Wawatmos,
+            Have a seat and enjoy the ride!`,
+        },
+
+        {
+            cameraRailDist : 1.5,
+            position : new THREE.Vector3(
+                curvePoints[2].x + 2,
+                curvePoints[2].y,
+                curvePoints[2].z
+            ),
+            title: "Services",
+            subtitle : `Do you want a drink?
+            We have a wide range of beverages!`,
+        },
+
+        {
+            cameraRailDist : -1,
+            position : new THREE.Vector3(
+                curvePoints[3].x - 3,
+                curvePoints[3].y,
+                curvePoints[3].z
+            ),
+            title: "Fear of flying?",
+            subtitle : `Our flights attendants will help you have a great journey`,
+        },
+
+        {
+            cameraRailDist : 1.5,
+            position : new THREE.Vector3(
+                curvePoints[4].x + 3.5,
+                curvePoints[4].y,
+                curvePoints[4].z - 12
+            ),
+            title: "Movies",
+            subtitle : `We provide a large selection of medias, we highly recommend you Porco Rosso `,
+        },
+        
+     ]
+
     }, [])
 
     const linePoints = useMemo ( () =>{
@@ -48,7 +104,12 @@ export default function Experience()
     }, [curve])
 
     const cameraGroup = useRef()
+    const cameraRail = useRef()
     const scroll = useScroll()
+    const lastScroll = useRef(0)
+
+
+
 
     useFrame((_state, delta) =>{
         // const curPointIndex = Math.min(
@@ -58,11 +119,48 @@ export default function Experience()
 
         const scrollOffset = Math.max(0, scroll.offset)
 
-        const curPoint = curve.getPoint(scrollOffset)
+        let friction = 1 
+        let resetCameraRail =  true
+        //LOOK TO CLOSE TEXT SECTIONS
+        textSections.forEach((textSection) =>{
+            const distance = textSection.position.distanceTo(
+                cameraGroup.current.position
+            )
+
+            if (distance < FRICTION_DISTANCE )
+            {
+                friction = Math.max(distance / FRICTION_DISTANCE, 0.1)
+                const targetCameraRailPosition = new THREE.Vector3(
+                    (1-distance / FRICTION_DISTANCE) * textSection.cameraRailDist,
+                    0,
+                    0,
+                )
+                cameraRail.current.position.lerp(targetCameraRailPosition, delta)
+                resetCameraRail = false
+            }
+        }) 
+
+        if(resetCameraRail){
+            const targetCameraRailPosition = new THREE.Vector3(0, 0, 0)
+            cameraRail.current.position.lerp(targetCameraRailPosition, delta)
+
+        }
+
+        //CALCULATE LERPED SCROLL OFFSET
+
+        let lerpedScrollOffset = THREE.MathUtils.lerp(lastScroll.current, scrollOffset, delta * friction)
+
+        //PROTECT BELOW 0 AND ABOVE 1
+        lerpedScrollOffset = Math.min(lerpedScrollOffset, 1)
+        lerpedScrollOffset = Math.max(lerpedScrollOffset, 0)
+
+        lastScroll.current = lerpedScrollOffset
+
 
         /**
          * Follow the curve points
          */
+        const curPoint = curve.getPoint(lerpedScrollOffset)
 
         cameraGroup.current.position.lerp(curPoint, delta *20)
 
@@ -169,7 +267,9 @@ export default function Experience()
         {/* <OrbitControls makeDefault/> */}
         <group ref = {cameraGroup}>
             <Background />
-            <PerspectiveCamera position={[0, 0, 5]} fov={30} makeDefault />
+            <group ref={cameraRail}>
+                <PerspectiveCamera position={[0, 0, 5]} fov={30} makeDefault />
+            </group>
             <group ref = {airplane}>
                 <Float floatIntensity={2} speed={3} rotationIntensity={0.5}>
                     <DogPlane 
@@ -180,50 +280,12 @@ export default function Experience()
                 </Float>
             </group>
         </group>
-        /**
-            TEXT
-         */
-        <group position={[-3, 0, -100]}>
-            <Text
-                color="white"
-                anchorX={"left"}
-                anchorY="middle"
-                fontSize={0.22}
-                maxWidth={2.5}
-                font={"assets/DMSerifDisplay-Regular.ttf"}
-            >
-                Welcome to DoggyPlane!{"\n"}
-                Have a seat and enjoy the ride!
-            </Text>
-
-        </group>
-
-        //SECOND TEXT SECTION
-
-        <group position={[-10, 1, -200]}>
-            <Text
-                color="white"
-                anchorX={"left"}
-                anchorY="center"
-                fontSize={0.52}
-                maxWidth={2.5}
-                font={"assets/DMSerifDisplay-Regular.ttf"}                
-            >
-                Services
-            </Text>
-            <Text
-                color="white"
-                anchorX={"left"}
-                anchorY="top"
-                position-y={-0.66}
-                fontSize={0.22}
-                maxWidth={2.5}
-                font={"assets/DMSerifDisplay-Regular.ttf"}                  
-            >
-                Do you want a drink {"\n"}
-                We have a wide range of baverages!
-            </Text>
-        </group>
+       
+        {
+            textSections.map((textSection, index) =>(
+                <TextSection{...textSection} key = {index} />
+            ))
+        }
 
         /**
             LINE PATH
