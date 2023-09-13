@@ -12,7 +12,7 @@ body,
     background: ivory;
 }
 ::-webkit-scrollbar{
-    width: 6px;
+    width: 2px;
 }
 
 
@@ -36,6 +36,11 @@ body,
     left: 0;
     bottom: 0;
     right: 0;
+
+}
+
+.overlay--disable {
+  pointer-events: none;
 
 }
 
@@ -106,6 +111,25 @@ body,
     animation: fadeOut 1s ease-in-out forwards;
   }
   
+.intro__scroll {
+  opacity: 0;
+  color: white;
+  font-family: "Inter", sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.05rem;
+  position: absolute;
+  top: 24vh;
+}
+
+.intro--disappear .intro__scroll{
+  animation: fadeIn 1s ease-in-out 1.5s forwards;
+}
+
+.overlay--scrolled .intro__scroll{
+  animation: fadeOut 1s ease-in-out forwards;
+}
+
+
   .explore {
     padding: 1rem 2rem;
     border: none;
@@ -151,6 +175,54 @@ body,
 
 .intro--disappear .explore {
   animation: fadeOut 1s ease-in-out forwards;
+}
+
+.outro {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 4s ease-in-out;
+}
+
+.outro--appear {
+  opacity: 1;
+}
+
+.outro__text {
+  font-family: "inter", sans-serif;
+  font-size: 1.5rem;
+  color: white;
+}
+
+/* RESPONSIVE MOBILE */
+
+@media screen and (max-width: 768px) {
+  .logo {
+    font-size: 3rem;
+    letter-spacing: 0.25rem;
+  }
+
+  .intro--disappear .logo {
+    top: 24px;
+    transform: scale(0.5);
+    transform-origin: center top;
+  }
+
+  .spinner_image {
+    width: 82px;
+    height: 82px;
+  }
+
+  .outro__text {
+    font-size: 1rem;
+  }
+  
 }
 
 /* ANIMATIONS */
