@@ -1,14 +1,34 @@
 import { Environment, Sphere } from "@react-three/drei"
+import { useFrame } from "@react-three/fiber"
 import { Gradient, LayerMaterial } from "lamina"
+import { useRef } from "react"
 
 import * as THREE from "three"
 
-export const Background = () => {
+export const Background = ({backgroundColors}) => {
 
-    const colorA = "#0923be"
-    const colorB = "#ffad30"
+    // const colorA = "#0923be"
+    // const colorB = "#ffad30"
     const start = 0.2
     const end = -0.5
+
+    const gradientRef = useRef()
+    const gradientEnvRef = useRef()
+
+    useFrame(() => {
+        gradientRef.current.colorA = new THREE.Color(
+            backgroundColors.current.colorA
+        )
+        gradientRef.current.colorB = new THREE.Color(
+            backgroundColors.current.colorB
+        )
+        gradientEnvRef.current.colorA = new THREE.Color(
+            backgroundColors.current.colorA
+        )
+        gradientEnvRef.current.colorB = new THREE.Color(
+            backgroundColors.current.colorB
+        )
+    })
 
     return <>
         <Sphere scale={ [500, 500, 500]} rotation-y={Math.PI / 2}>
@@ -19,8 +39,9 @@ export const Background = () => {
                     side={THREE.BackSide}
                 >
                     <Gradient 
-                        colorA={colorA}
-                        colorB={colorB}
+                        ref={gradientRef}
+                        // colorA={colorA}
+                        // colorB={colorB}
                         axes={"y"}
                         start={start}
                         end={end}
@@ -30,7 +51,7 @@ export const Background = () => {
         </Sphere>
 
 
-        <Environment resolution={256} >
+        <Environment resolution={256} frames={Infinity} >
             <Sphere 
              scale={ [100, 100, 100]} 
              rotation-y={Math.PI / 2} 
@@ -43,8 +64,9 @@ export const Background = () => {
                     side={THREE.BackSide}
                 >
                     <Gradient 
-                        colorA={colorA}
-                        colorB={colorB}
+                        ref={gradientEnvRef}
+                        // colorA={colorA}
+                        // colorB={colorB}
                         axes={"y"}
                         start={start}
                         end={end}

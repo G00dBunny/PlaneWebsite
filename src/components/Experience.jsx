@@ -1,11 +1,14 @@
 import { Line, Float, OrbitControls, useScroll, PerspectiveCamera, Text } from '@react-three/drei'
 import { Background } from './background.jsx'
 import { DogPlane } from './DogPlane.jsx'
-import {  useMemo, useRef } from 'react'
+import {  useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from "three"
 import { useFrame } from '@react-three/fiber'
 import { TextSection } from './TextSection.jsx'
 import { lerp } from 'three/src/math/MathUtils.js'
+import { gsap } from "gsap";
+import { usePlay } from '../contexts/Play.jsx'
+
 
 const LINE_NB_POINTS = 1000
 const CURVE_DISTANCE = 250
@@ -28,6 +31,9 @@ export default function Experience()
             new THREE.Vector3(0, 0, -7 * CURVE_DISTANCE),
         ]
     , [])
+
+    const sceneOpacity = useRef(0)
+    const lineMaterialRef = useRef()
 
 
     const curve = useMemo(() =>
@@ -52,9 +58,9 @@ export default function Experience()
         },
 
         {
-            cameraRailDist : 1.5,
+            cameraRailDist : 2.5,
             position : new THREE.Vector3(
-                curvePoints[2].x + 2,
+                curvePoints[2].x + 3,
                 curvePoints[2].y,
                 curvePoints[2].z
             ),
@@ -64,9 +70,9 @@ export default function Experience()
         },
 
         {
-            cameraRailDist : -1,
+            cameraRailDist : -2.5,
             position : new THREE.Vector3(
-                curvePoints[3].x - 3,
+                curvePoints[3].x - 4,
                 curvePoints[3].y,
                 curvePoints[3].z
             ),
@@ -75,9 +81,9 @@ export default function Experience()
         },
 
         {
-            cameraRailDist : 1.5,
+            cameraRailDist : 2,
             position : new THREE.Vector3(
-                curvePoints[4].x + 3.5,
+                curvePoints[4].x + 3,
                 curvePoints[4].y,
                 curvePoints[4].z - 12
             ),
@@ -108,10 +114,22 @@ export default function Experience()
     const scroll = useScroll()
     const lastScroll = useRef(0)
 
+    const { play} = usePlay()
+
 
 
 
     useFrame((_state, delta) =>{
+
+        lineMaterialRef.current.opacity = sceneOpacity.current;
+
+        if(play && sceneOpacity.current<1) {
+            sceneOpacity.current = THREE.MathUtils.lerp(
+                sceneOpacity.current,
+                1,
+                delta * 0.1
+            )
+        }
         // const curPointIndex = Math.min(
         //     Math.round(scroll.offset * linePoints.length),
         //     linePoints.length - 1
@@ -155,6 +173,7 @@ export default function Experience()
         lerpedScrollOffset = Math.max(lerpedScrollOffset, 0)
 
         lastScroll.current = lerpedScrollOffset
+        tl.current.seek(lerpedScrollOffset * tl.current.duration())
 
 
         /**
@@ -176,7 +195,7 @@ export default function Experience()
         )
         const targetLookAt = new THREE.Vector3().subVectors(curPoint, lookAtPoint).normalize()
 
-        const lookAt = currentLookAt.lerp(targetLookAt, delta * 24)
+        const lookAt = currentLookAt.lerp(targetLookAt, delta *24)
         cameraGroup.current.lookAt(
             cameraGroup.current.position.clone().add(lookAt)
         )
@@ -260,13 +279,60 @@ export default function Experience()
 
     const airplane = useRef()
 
+    //tl = timeline
+    const tl = useRef()
+    const backgroundColors = useRef({
+        colorA : "#3535cc",
+        colorB: "#abaadd",
+    })
+
+    const planeInTl = useRef()
+
+
+
+    useLayoutEffect(() => {
+        tl.current = gsap.timeline()
+
+        tl.current.to(backgroundColors.current, {
+            duration : 1,
+            colorA : "#6f35cc",
+            colorB: "#ffad30",
+        })
+        tl.current.to(backgroundColors.current, {
+            duration : 1,
+            colorA : "#424242",
+            colorB: "#ffcc00",
+        })
+        tl.current.to(backgroundColors.current, {
+            duration : 1,
+            colorA : "#81318b",
+            colorB: "#55ab8f",
+        })
+        tl.current.pause()
+
+        planeInTl.current = gsap.timeline()
+        planeInTl.current.pause()
+        planeInTl.current.from(airplane.current.position, {
+            duration : 3,
+            z: 5,
+            y: -2,
+        })
+        
+    }, [])
+    
+    useEffect(() => {
+        if (play) {
+            planeInTl.current.play()
+        }
+    }, [play])
+
     return <>
 
         <directionalLight position={[0, 3, 1]} intensity={0.1} />
 
         {/* <OrbitControls makeDefault/> */}
         <group ref = {cameraGroup}>
-            <Background />
+            <Background backgroundColors = {backgroundColors} />
             <group ref={cameraRail}>
                 <PerspectiveCamera position={[0, 0, 5]} fov={30} makeDefault />
             </group>
@@ -309,7 +375,12 @@ export default function Experience()
                             extrudePath : curve,
                         }
                     ]} />
-                <meshStandardMaterial color={"white"} opacity={1} transparent envMapIntensity={2} />
+                <meshStandardMaterial 
+                    color={"white"} 
+                    ref={lineMaterialRef}
+                    transparent 
+                    envMapIntensity={2} 
+                />
             </mesh>
         </group>
     </>
