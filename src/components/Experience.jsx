@@ -54,7 +54,7 @@ export default function Experience() {
           curvePoints[1].y,
           curvePoints[1].z
         ),
-        subtitle: `Welcome to Wawatmos,
+        subtitle: `Welcome to DOGGYPLANE,
             Have a seat and enjoy the ride!`,
       },
 
@@ -383,7 +383,7 @@ export default function Experience() {
     () => (
       <>
         <directionalLight position={[0, 3, 1]} intensity={0.1} />
-        {/* <OrbitControls makeDefault/> */}
+        {/* <OrbitControls makeDefault /> */}
         <group ref={cameraGroup}>
           <Background backgroundColors={backgroundColors} />
           <group ref={cameraRail}>
